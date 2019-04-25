@@ -53,11 +53,17 @@ admin.initializeApp({
 
 //database refrence
 var db = admin.database();
-var key='Users/';
-var key_new='new/';
+
+var key_admins='admins/';
+var key_orders='orders/';
+var key_node='node/';
 
 
 app.post("/api/login/", (req, res, next) => {
+
+    console.log("Logging in")
+    console.log(req.body)
+
     passport.authenticate('local', (err, user, info) => {
         if (err) {
             return next(err);
@@ -74,6 +80,51 @@ app.post("/api/login/", (req, res, next) => {
     })(req, res, next)
 })
 
+app.post('/api/signup/', function(req, res){
+
+    console.log("Signing Up")
+    
+    console.log(req.body)
+
+    var messageListRef = db.ref(key_admins);
+
+    messageListRef.once('value', function(users){
+
+        let check = true
+
+        users.forEach(function(u) {
+
+            u = u.val()
+
+            if(u.email === req.body.email)
+            {
+                check = false
+                console.log("This Email is already signed up")
+                return res.status(400).send('This Email is already signed up')
+                
+            }
+        });
+
+        if(check)
+        {
+            var newMessageRef = messageListRef.push();
+    
+            newMessageRef.set({
+                email: req.body.email,
+                password: req.body.password
+            });
+    
+            console.log("Admin Added")
+            return res.send();
+
+        }
+
+    });
+
+    
+});
+
+
 
 app.get('/api/logout/', function(req, res){
     req.logout();
@@ -81,23 +132,44 @@ app.get('/api/logout/', function(req, res){
     return res.send();
 });
 
-app.post('/api/order/', function(req, res){
-    console.log("Order Starting")
+app.post('/api/node/', function(req, res){
+
+    console.log("Sending Order to Node")
     console.log(req.body)
-    var messageListRef = db.ref(key_new);
-    var newMessageRef = messageListRef.push();
 
-    newMessageRef.set({
-        name: req.body.name,
-        location1: req.body.location1,
-        location2: req.body.location2,
-        red: req.body.red,
-        green: req.body.green,
-        yellow: req.body.yellow
+    var messageListRef = db.ref(key_node);
+
+    messageListRef.once('value', function(order){
+
+        let check = true
+
+        users.forEach(function(u) {
+
+            u = u.val()
+
+            if(u.id === req.body.id)
+            {
+                check = false
+                console.log("This order is already added")
+                return res.status(400).send('This order is already added')
+                
+            }
+        });
+
+        if(check)
+        {
+            var newMessageRef = messageListRef.push();
+    
+            newMessageRef.set({
+                id: req.body.id
+            });
+    
+            console.log("Order Added to the data base")
+            return res.send();
+
+        }
+
     });
-
-    console.log("Order Added to the data base")
-    return res.send();
 });
 
 
@@ -113,18 +185,28 @@ const authMiddleware = (req, res, next) => {
 
 app.get("/api/user/", authMiddleware, (req, res) => {
 
-    db.ref(key).on('value', function(users){
+    db.ref(key_admins).once('value', function(users){
 
         let user = null
-
-        users.forEach(function(u) {
-            u = u.val()
-            
-            if(u.name === req.session.passport.user)
+        //console.log(req.session.passport)
+        
+        users.forEach(function(ad) {
+            u = ad.val()
+            if(u.email === req.session.passport.user)
                 user = u
         });
+
+        db.ref(key_orders).once('value', function(orders){
+
+            orders = orders.val()
+
+            let data = {
+                user: user,
+                orders: orders
+            }
+            res.send(data)
+        });
         
-        res.send({user: user})
     });
     
 
@@ -135,22 +217,24 @@ passport.use(new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password'
   }, 
-  (username, password, done) => {
+  (email, password, done) => {
 
-    db.ref(key).on('value', function(users){
+    db.ref(key_admins).once('value', function(admins){
 
         let user = null
 
-        users.forEach(function(u) {
-            u = u.val()
-            if(u.email === username && u.password === password)
+        admins.forEach(function(ad) {
+            u = ad.val()
+
+            console.log(u, email, password)
+            if(u.email === email && u.password === password)
                 user = u
         });
 
         if (user)
             done(null, user)
         else
-            done(null, false, {message: 'Incorrect username or password'})
+            done(null, false, {message: 'Incorrect email or password'})
         
 
     });
@@ -160,19 +244,19 @@ passport.use(new LocalStrategy({
 ))
 
 passport.serializeUser((user, done) => {
-  done(null, user.name)
+  done(null, user.email)
 })
 
-passport.deserializeUser((name, done) => {
+passport.deserializeUser((email, done) => {
 
-    db.ref(key).on('value', function(users){
+    db.ref(key_admins).once('value', function(admins){
 
         let user = null
 
-        users.forEach(function(u) {
+        admins.forEach(function(u) {
 
             u = u.val()
-            if(u.name === name)
+            if(u.email === email)
                 user = u
         });
 

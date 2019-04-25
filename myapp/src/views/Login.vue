@@ -74,6 +74,7 @@ export default {
           })
           .catch((errors) => {
             console.log('Cannot log in')
+            console.log(errors.response.data)
           })
       }
       login()

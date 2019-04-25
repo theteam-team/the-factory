@@ -25,9 +25,9 @@ v-scroll:#scroll-target="onScroll"
                             </v-list-tile-avatar>
                             <v-list-tile-content>
                               <div class="item" style="margin-left:180px;" @click="removeOrder(index)"> &times;</div>
-                              <div  style="display:inline-block;font-size:20px; "> {{ username }} </div>
+                              <div  style="display:inline-block;font-size:20px; "> {{ orders[index].client.name }} </div>
 
-                              <div  style="font-size:20px;margin-left:0px; "> Order ID: {{ order.id }} </div>
+                              <div  style="font-size:20px;margin-left:0px; "> Order ID: {{ orders[index].id }} </div>
                             </v-list-tile-content>
                           </v-list-tile>
                             <v-divider></v-divider>
@@ -58,6 +58,13 @@ v-scroll:#scroll-target="onScroll"
         <v-btn v-on:click="logout" >
           <v-icon left>{{ menuItems[1].icon }}</v-icon>
           {{ menuItems[1].title}}
+        </v-btn>
+
+        <v-btn :key="menuItems[2].title"
+        router
+        :to="menuItems[2].link">
+          <v-icon left>{{ menuItems[2].icon }}</v-icon>
+          {{ menuItems[2].title}}
         </v-btn>
 <!--
         <v-btn flat v-for="item in menuItems"
@@ -98,7 +105,7 @@ export default {
       menuItems:[
         { icon:'home', title:'Home',link:'/home'},
         { icon:'lock_open', title:'logout', link:'/'},
-        { icon:'face', title:'Signup',link:'/Signup'},
+        { icon:'face', title:'Signup',link:'/signup'},
 
       ],
 
@@ -114,20 +121,19 @@ export default {
         })
     },
     showDetails(index){
-
+      this.order = this.orders[index]
       serverBus.$emit('orderSelected', this.orders[index]);
-
     }
   },
   created() {
-  // Using the server bus
-  serverBus.$on('ordersReceived', (orders) => {
-    this.orders = orders
-  });
+    // Using the server bus
+    serverBus.$on('ordersReceived', (orders) => {
+      this.orders = orders
+    });
 
-  serverBus.$on('user', (user) => {
-    this.user = user
-  });
+    serverBus.$on('user', (user) => {
+      this.user = user
+    });
  }
 
 }

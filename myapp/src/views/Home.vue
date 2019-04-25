@@ -16,7 +16,7 @@
                            <v-avatar  color="yellow" >
                              <v-icon x-large dark>account_circle</v-icon>
                            </v-avatar>
-                           {{ name }}
+                           {{ user.email }}
                          </div>
 
                     </v-layout>
@@ -30,17 +30,18 @@
                </v-layout>
                <v-flex xs12  >
                  <br>
-                 <div style="font-size:25px;" >-Name: {{ username }} </div>
-                 <div style="font-size:25px;" >-Location1: {{ location1 }}</div>
-                 <div style="font-size:25px;" >-Location2: {{ location2 }}</div>
+                 <div style="font-size:25px;" >-ID: {{ order.id }} </div>
+                 <div style="font-size:25px;" >-Name: {{ order.client.name }} </div>
+                 <div style="font-size:25px;" >-Location1: {{ order.client.latitude }}</div>
+                 <div style="font-size:25px;" >-Location2: {{ order.client.longitude }}</div>
                  <br>
                  <p style="font-size:25px;" >Product information:</p>
-                 <div style="font-size:25px;">-Red balls: {{ red }}</div>
-                 <div style="font-size:25px;" >-Green balls: {{ green }}</div>
-                 <div style="font-size:25px;" >-Yellow balls: {{ yellow }}</div>
+                 <div style="font-size:25px;">-Red balls: {{ order.red }}</div>
+                 <div style="font-size:25px;" >-Green balls: {{ order.green }}</div>
+                 <div style="font-size:25px;" >-Yellow balls: {{ order.yellow }}</div>
                  <br>
                   <v-flex xs12 offset-xs7 >
-                 <v-btn   v-on:click="newOrder">Send Order</v-btn>
+                 <v-btn   v-on:click="OrderToNode">Send Order</v-btn>
                  </v-flex>
               </v-flex>
              </v-flex>
@@ -157,27 +158,24 @@ export default {
     }
   },
   methods: {
-    getUserData: function () {
+
+    getOrdersData: function () {
       let self = this
       axios.get('/api/user/')
         .then((response) => {
           console.log(response)
 
-          this.user = response.data.user
+          //self.$set(this, 'location1', response.data.user.latitude)
+          //self.$set(this, 'location2', response.data.user.longitude)
 
-          self.$set(this, 'username', response.data.user.name)
-          self.$set(this, 'location1', response.data.user.latitude)
-          self.$set(this, 'location2', response.data.user.longitude)
+          self.$set(this, 'user', response.data.user)
+          
 
-          for (var order in  response.data.user.orders) {
-            if (response.data.user.orders.hasOwnProperty(order)) {
-              this.orders.push(response.data.user.orders[order])
-                
-            }
-          }
+          for (var order in  response.data.orders)
+              this.orders.push(response.data.orders[order])
 
           serverBus.$emit('ordersReceived', this.orders);
-          serverBus.$emit('user', response.data.user);
+          serverBus.$emit('user', this.user);
 
         })
         .catch((errors) => {
@@ -186,24 +184,12 @@ export default {
         })
     },
     
-    newOrder() {
-     
-      let n = this.user.name
-      let l1 = this.location1
-      let l2 = this.location2
-      let r = this.red
-      let g = this.green
-      let y = this.yellow
+    OrderToNode() {
 
-      let data = {
-        name: n,
-        location1: l1,
-        location2: l2,
-        red: r,
-        green: g,
-        yellow: y,
-      }
-        axios.post('/api/order/', data)
+        let data = {
+          id: this.order.id
+        }
+        axios.post('/api/node/', data)
           .then((response) => {
             console.log('Order Made')
           })
@@ -220,13 +206,12 @@ export default {
   // Using the server bus
   serverBus.$on('orderSelected', (order) => {
     this.order = order
-   this.red = order.red;
-   this.green = order.green;
-   this.yellow = order.yellow;
   });
+
+  
  },
   mounted () {
-    this.getUserData()
+    this.getOrdersData()
   }
 }
 </script>

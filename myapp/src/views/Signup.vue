@@ -5,14 +5,15 @@
        <v-card>
          <v-card-text>
            <v-container>
-             <form @submit.prevent="Signup(email,password)">
+             
+             <form v-on:submit="signup">
                <v-layout row>
                  <v-flex xs12 >
                    <v-text-field
                    name="email"
                    label="Mail"
                    id="email"
-                   v-model="email"
+                   
                    type="email"
                    required>
                    </v-text-field>
@@ -25,7 +26,7 @@
                    name="password"
                    label="Password"
                    id="password"
-                   v-model="password"
+                   
                    type="password"
                    required>
                    </v-text-field>
@@ -36,7 +37,7 @@
                <v-layout row>
                  <v-flex xs12 >
 
-                  <v-btn type="submit">Sign up</v-btn>
+                  <v-btn type="submit">Sign Up</v-btn>
                  </v-flex>
                </v-layout>
 
@@ -52,22 +53,53 @@
 
 
 <script>
+import router from '../router'
+import axios from 'axios'
+export default {
+  name: 'SignUp',
+  methods: {
+    signup: (e) => {
+      e.preventDefault()
+      let email = e.target.elements.email.value
+      let password = e.target.elements.password.value
 
-  export default {
-    data () {
-      return {
-        email:'',
-        password:'',
+      let signup = () => {
+        
+        let data = {
+          email: email,
+          password: password
+        }
 
+        axios.post('/api/signup/', data)
+          .then((response) => {
+            console.log('Signed Up')
+
+            let login = () => {
+
+              let data = {
+                email: email,
+                password: password
+              }
+              axios.post('/api/login/', data)
+                .then((response) => {
+                  console.log('Logged in')
+                  router.push('/home')
+                })
+                .catch((errors) => {
+                  console.log('Cannot log in')
+                })
+              }
+              login()
+
+          })
+          .catch((errors) => {
+            console.log("Cannot Sign Up")
+            //console.log(errors)
+            console.log(errors.response.data)
+          })
       }
-    } ,
-    methods:{
-       Signup:function(e){
-         
-       }
-
-
-
+      signup()
     }
   }
+}
 </script>

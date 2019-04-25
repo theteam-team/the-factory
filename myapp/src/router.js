@@ -22,7 +22,7 @@ export default new Router({
       component: Home,
     },
     {
-      path: '/Signup',
+      path: '/signup',
       name: 'Signup',
       component: Signup,
     },
