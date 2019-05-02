@@ -27,7 +27,7 @@ v-scroll:#scroll-target="onScroll"
                               <div class="item" style="margin-left:180px;" @click="removeOrder(index)"> &times;</div>
                               <div  style="display:inline-block;font-size:20px; "> {{ orders[index].client.name }} </div>
 
-                              <div  style="font-size:20px;margin-left:0px; "> Order ID: {{ orders[index].id }} </div>
+                              <div  style="font-size:20px;margin-left:0px; "> Order ID: {{ orders[index].client.email }} </div>
                             </v-list-tile-content>
                           </v-list-tile>
                             <v-divider></v-divider>

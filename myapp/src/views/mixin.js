@@ -9,6 +9,7 @@
         sorting:true,
         collecting:true,
         idForOrder:1,
+        progress: "0",
         order: {
           "id" : "",
           "client" : {
@@ -19,7 +20,7 @@
           "red" : "",
           "green" : "",
           "yellow" : "",
-          "status" : ""
+          "progress" : ""
         },
         orders:[],
      }

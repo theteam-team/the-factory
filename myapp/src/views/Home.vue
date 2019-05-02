@@ -91,7 +91,7 @@
                            <v-progress-linear
                              color="warning"
                              height="15"
-                             value="60"
+                             :value="progress"
                             ></v-progress-linear>
                           </v-flex>
                         </v-layout>
@@ -120,7 +120,7 @@
                       <v-progress-linear
                         color="warning"
                         height="15"
-                        value="60"
+                        :value="progress"
                        ></v-progress-linear>
                      </v-flex>
                    </v-layout>
@@ -169,7 +169,6 @@ export default {
           //self.$set(this, 'location2', response.data.user.longitude)
 
           self.$set(this, 'user', response.data.user)
-          
 
           for (var order in  response.data.orders)
               this.orders.push(response.data.orders[order])
@@ -187,7 +186,10 @@ export default {
     OrderToNode() {
 
         let data = {
-          id: this.order.id
+          id: this.order.id,
+          red: this.order.red,
+          green: this.order.green,
+          yellow: this.order.yellow
         }
         axios.post('/api/node/', data)
           .then((response) => {
@@ -196,9 +198,7 @@ export default {
           .catch((errors) => {
             console.log('Order Failed')
           })
-      
 
-      //nOrder()
     },
 
   },
@@ -212,6 +212,56 @@ export default {
  },
   mounted () {
     this.getOrdersData()
+
+    var HOST = "ws://localhost:3000";
+
+    var ws = new WebSocket(HOST);
+    ws.onopen = function(){
+        ws.send(JSON.stringify({
+            type: "client_connected",
+            data: "hello !"
+        }));
+    }
+
+    ws.onmessage = function(event)
+    {
+
+      if(event.type == "order")
+      {
+        /*
+        var check = true
+        
+        for (var order in  this.orders)
+        {
+          if(order.id == event.order.id)
+          {
+            check = false
+            break
+          }
+        }
+        
+        if(check)
+        {
+          this.orders.push(event.order)
+          serverBus.$emit('ordersReceived', this.orders);
+        }
+
+        */
+
+      this.orders = []
+       for (var order in  event.order)
+              this.orders.push(event.order[order])
+      
+      serverBus.$emit('ordersReceived', this.orders);
+        
+      }
+
+      else if (event.type == "progress")
+      {
+        this.progress = event.progress
+      }
+    };
+
   }
 }
 </script>

@@ -7,6 +7,8 @@ const express = require('express')
 // creating an express instance
 const app = express()
 
+const SocketServer = require('ws').Server;
+
 const cookieSession = require('cookie-session')
 const bodyParser = require('body-parser')
 const passport = require('passport')
@@ -57,6 +59,57 @@ var db = admin.database();
 var key_admins='admins/';
 var key_orders='orders/';
 var key_node='node/';
+
+var server = app.listen(3000, () => {
+    console.log("Example app listening on port 3000")
+  })
+
+//socket setup **
+var wss = new SocketServer({ server });
+
+wss.on('connection', (ws) => {
+	console.log('Client connected');
+	
+    ws.on('message', function(msg)
+    {
+		console.log(msg);
+		
+		var message = JSON.parse(msg);
+        if(message.type == "client_connected")
+        {
+            ws.type = "client";
+            //console.log(message.data);
+        }
+        else if(message.type == "node_connected")
+        {
+            ws.type = "node";
+        }
+
+        else if(message.type == "progress")
+        {
+            console.log("Checking for clients");
+            wss.clients.forEach(function e(client)
+            {
+                if(client.type == "client")
+                {
+                    console.log("Found a node sending ...");
+                    client.send(JSON.stringify
+                    ({
+                        type : "progress",
+
+                        //id: message.id,
+                        progress : message.progress
+                    }));
+                }
+            })
+        }
+
+        
+	});
+	
+    ws.on('close', () => console.log('Client disconnected'));
+    
+});
 
 
 app.post("/api/login/", (req, res, next) => {
@@ -134,8 +187,28 @@ app.get('/api/logout/', function(req, res){
 
 app.post('/api/node/', function(req, res){
 
-    console.log("Sending Order to Node")
+    console.log("Sending Order to Node socket")
     console.log(req.body)
+
+    wss.clients.forEach(function e(client)
+    {
+        if(client.type == "node")
+        {
+            console.log("Found a node sending ...");
+            client.send(JSON.stringify
+            ({
+                //type : "ORDER",
+
+                //id: req.body.id,
+                red : req.body.red,
+                green : req.body.green,
+                yellow : req.body.yellow
+            }));
+        }
+    })
+
+    /*
+    console.log("Sending Order to Node firebase")
 
     var messageListRef = db.ref(key_node);
 
@@ -170,6 +243,8 @@ app.post('/api/node/', function(req, res){
         }
 
     });
+
+    */
 });
 
 
@@ -263,14 +338,34 @@ passport.deserializeUser((email, done) => {
         done(null, user)
 
     });
-    
-  
+
 })
 
 
-app.listen(3000, () => {
-  console.log("Example app listening on port 3000")
-})
+
+var messageListRef = db.ref(key_orders);
+messageListRef.on('child_changed', function(childSnapshot) {
+
+    var order = childSnapshot.val();
+    console.log(order);
+
+    wss.clients.forEach(function e(client)
+    {
+        if(client.type == "client")
+        {
+            console.log("Found a client sending ...");
+            client.send(JSON.stringify
+            ({
+                type : "ORDER",
+                order : order
+            }));
+        }
+    })
+
+});
+
+
+
 
 
 
